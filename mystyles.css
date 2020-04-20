@@ -1,0 +1,23 @@
+ .container  { 
+              padding-top: 20%;
+              vertical-align: bottom;
+              text-align: center;
+         }
+.row > div {
+             padding: 20px;
+             background-color: magenta;
+             border: 2px solid black;
+         }
+div { text-align: center;}
+#pic { width: 50%; padding-left: 20%;  }
+@media (min-width: 500px) {
+    body {
+        background-color: peachpuff;
+    }
+}
+
+@media (max-width: 499px) {
+    body {
+        background-color: paleturquoise;
+    }
+}
