@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% macro error(message) %}
+    <div class="error">
+        {{ message }}
+    </div>
+{% endmacro %}
+{% block heading %}
+    Hello!
+{% endblock %}
+
+{% block body %}
+{% if  name  is defined and  name |length %}
+    Hello, {{ name }}!  Search for a book
+        <form action="{{ url_for('searchBook') }}" method="post">
+            <input type="text" name="isbn" placeholder="{{isbn}}">
+            <input type="text" name="title" placeholder= "{{title}}">
+            <input type="text" name="author" placeholder="{{author}}">
+            <button id="Search"  name="Search" value="Search">  Search </button>
+        </form>
+    {% if  books is defined and books|length  %}
+        <table>
+            <div class="container">
+                <div class="row">
+                    <div class ="col-sm-1"> BookDetails</div>
+                    <div class="col-lg-2 col-sm-2">
+                        ISBN.
+                    </div>
+                    <div class="col-lg-3 col-sm-3">
+                        Titile.
+                    </div>
+                    <div class="col-lg-3 col-sm-3">
+                        Author.
+                    </div>
+                    <div class="col-lg-3 col-sm-3">
+                        Year.
+                    </div>
+                </div>
+                {% for book in books %}
+                {%set bookid = book.bookid %}
+                    <div class="row" >
+                            <a class ="col-sm-1"  href = "{{ url_for('bookDetails', bookid=bookid)}}" >{{bookid}}</a>
+                            <div class="col-lg-2 col-sm-3">
+                                {{ book.isbn }}
+                            </div>
+                            <div class="col-lg-3 col-sm-3">
+                                {{ book.title }}
+                            </div>
+                            <div class="col-lg-3 col-sm-3">
+                                {{ book.author }}
+                            </div>
+                            <div class="col-lg-3 col-sm-3">
+                                {{ book.year }}
+                            
+                            </div>
+                            
+                    </div>
+                {% endfor %}
+            </div>
+       </table>
+    {% else %}
+        {{ error("NO BOOKS FOUND FOR THE SEARCH") }}
+    {% endif %}
+
+{% else %}
+    {{ error("PLEASE LOGIN TO SEARCH FOR BOOKS") }}
+{% endif %}
+
+{% endblock %}

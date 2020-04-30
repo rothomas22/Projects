@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% macro error(message) %}
+    <div class="error">
+        {{ message }}
+    </div>
+{% endmacro %}
+{% block heading %}
+    Hello!
+{% endblock %}
+
+{% block body %}
+{% if  name  is defined and  name |length %}
+    Hello, {{ name }}!  Book Details
+    <div class="container">
+        <div class="panel panel-default">
+          <div class="panel-body">
+                <label for="Title">Title:</label>
+                <label class="col-sm-2" for="Title">{{bookDetails[0].title}}</label>
+                <label class="control-label " for="author">Author:</label>
+                <label class="col-sm-2">{{bookDetails[0].author}}</label>
+                <label class="control-label " for="isbn">ISBN:</label>
+                <label class="col-sm-2">{{bookDetails[0].isbn}}</label>
+                <label class="control-label " for="year">Publication Year:</label>
+                <label class="col-sm-2">{{bookDetails[0].year}}</label>
+            </div>
+            <div class="panel-body">
+                <table>
+                    <div class="container">
+                        <thead>Reviews
+                            <div class="row" >
+                                <div class="col-lg-2 col-sm-2">
+                                    Rating
+                                </div>
+                                <div class="col-lg-3 col-sm-3">
+                                    Review
+                                </div>
+                                <div class="col-lg-3 col-sm-3">
+                                    Reviewed By
+                                </div>
+                            </div>
+                    </thead>
+                        {% for bookReveiws in bookDetails %}
+                       <div class="row" >
+                                    <div class="col-lg-2 col-sm-3">
+                                        {{ bookReveiws.rating }}
+                                    </div>
+                                    <div class="col-lg-3 col-sm-3">
+                                        {{ bookReveiws.reviewtext  }}
+                                    </div>
+                                    <div class="col-lg-3 col-sm-3">
+                                        {{ bookReveiws.username }}
+                                    </div>
+                        </div>
+                        {% endfor %}
+                      </div>
+                </table>
+            </div>
+        </div>
+     
+      <div class="panel-group">
+        <div class="panel panel-default">
+            <h5>GoodReads Reviews</h5>
+          <div class="panel-body">
+            <label for="reviewcount">ReviewCount:</label>
+            <label  class="col-sm-2">{{goodreads['books'][0]["reviews_count"]}}</label>
+            <label for="avgrating">AverageRating:</label>
+            <label  class="col-sm-2">{{goodreads['books'][0]["average_rating"]}}</label>
+           </div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">Give a Rating</div>
+        </div>
+      </div>
+
+        <form action="{{ url_for('addRating') }}" method="post">
+            <input type="text" name="rating" placeholder="Enter Rating 1 - 5" >
+            <input type="text" name="ReviewText" placeholder= "Enter Reveiw Text">
+             <button id="Submit"  name="Submit" value="Submit">  Submit </button>
+        </form>
+        {% set errormessage = session["error_message"] %}
+        {% if errormessage is defined and errormessage|length %}
+            {{error(errormessage) }}
+         {% else %}
+            
+         {% endif %}
+        
+{% else %}
+    {{ error("PLEASE LOGIN TO SEARCH FOR BOOKS") }}
+{% endif %}
+
+{% endblock %}

@@ -1,15 +1,24 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>My Webpage</title>
-    </head>
-    <body>
-        Hello, world!
-        <h2>Table of Contents</h2>
-        <ul>
-            <li><a href = "second.html" >  photo</a></li>
-            <li><a href = "third.html" >  grid</a></li>
-            <li><a href = "fourth.html" >  table</a></li>
-         </ul>
-     </body>
-</html>
+{% extends "layout.html" %}
+
+{% block heading %}
+    First Page
+{% endblock %}
+
+{% block body %}
+
+<form class = "container" action="{{ url_for('validateUser') }}" method="post">
+        <input type="text" name="name" placeholder="Enter Your UserName">
+        <input type="password" name="password" placeholder="Enter Your Password">
+        <button id="Submit"  name="submit" value="Submit">  Submit </button>
+{% if error_message is defined and error_message|length %}
+    <h1>{{error_message}}</h1>
+    <input type="text" name="emailaddress" placeholder="Enter Your emailaddress">
+    <button id = "Register" name="register" value="Register">  Register </button>
+    {% set error_message = "" %}
+{% else %}
+
+{% endif %}
+</form>
+
+
+{% endblock %}
