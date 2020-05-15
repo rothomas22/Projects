@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head>
+         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+         <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+        <title>Rosas Flacksite!</title>
+        <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+  
+    </head>
+    <body>
+        <div>
+            <input id="name" type="text" onchange="whatisthis(this.value)" placeholder="DisplayName">
+    </div>
+        {% raw %}
+        <script id="newchannel" type="text/template">
+            <div class="row">{{channelname}}</div>
+        </script>
+        {% endraw %}
+        
+        <script src="{{ url_for('static', filename='index.js') }}"></script>
+      
+    <div class="container">
+        <div class="row">
+            <div id = "channellist" class="col-3">
+                <button class="row" id='newC' >Add new channel</button>
+                {% for channel in channels %}
+                <div class="row">{{ channel.channelname}}</div>
+                {% endfor %}
+            </div>
+            <div class="col-9">
+                This is another section.
+            </div>
+        </div>
+    </div>
+    
+        <hr>
+        <button data-vote="yes">Yes</button>
+        <button data-vote="no">No</button>
+        <button data-vote="maybe">Maybe</button>
+
+
+    </body>
+</html>
+

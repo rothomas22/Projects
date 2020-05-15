@@ -1,8 +1,40 @@
 .error {
-    border: 2px solid black;
+    border: None;
     font-size: 18px;
     font-weight: bold;
     margin: 10px;
     padding: 10px;
     color: red;
+}
+
+.messageEnter {
+    border: None;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 10px;
+    padding: 10px;
+    color: purple;
+}
+.row {
+    padding: 10px;
+    background-color: teal;
+    border: 2px solid black;
+}
+
+.buttonrow {
+    padding: 10px;
+    background-color: lightskyblue;
+    border: 2px solid black;
+    width: 100px;
+}
+.newChannelrow {
+    padding: 20px;
+    background-color: yellowgreen;
+    border: 2px solid black;
+}
+.messagerow {
+    padding: 5px;
+    background-color: gray;
+    color: black;
+    border: None;
 }

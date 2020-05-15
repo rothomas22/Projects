@@ -1,24 +1,64 @@
 {% extends "layout.html" %}
+{% macro error(message) %}
+<div class="error">
+    {{ message }}
+</div>
+  {% endmacro %}
+{% block head %}
+<title>Rosas Flacksite!</title>
+
+{% raw %}
+<script id="newchannel" type="text/template">
+    <button class="row buttonrow" name = "{{channelid}}" value = "{{channelid}}" id = "{{channelid}}" >{{channelname}}</button>
+</script>
+<script id="newmessage" type="text/template">
+    <div class="messagerow"  >{{newrmessage}}</div>
+</script>
+
+{% endraw %}
+
+{% endblock %}
 
 {% block heading %}
-    First Page
+<div>
+    <input id="name" type="text" onchange="whatisthis(this.value)" placeholder="DisplayName">
+</div>
+<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.11/handlebars.min.js"></script>
+<script src="{{ url_for('static', filename='index.js') }}"></script>
+
 {% endblock %}
 
 {% block body %}
 
-<form class = "container" action="{{ url_for('validateUser') }}" method="post">
-        <input type="text" name="name" placeholder="Enter Your UserName">
-        <input type="password" name="password" placeholder="Enter Your Password">
-        <button id="Submit"  name="submit" value="Submit">  Submit </button>
-{% if error_message is defined and error_message|length %}
-    <h1>{{error_message}}</h1>
-    <input type="text" name="emailaddress" placeholder="Enter Your emailaddress">
-    <button id = "Register" name="register" value="Register">  Register </button>
-    {% set error_message = "" %}
-{% else %}
 
-{% endif %}
-</form>
+<div class="container">
+    <div class="newChannelrow" >
+        <button id='newC' >Add new channel</button>
+        <input id="NewChannelname" type="text" placeholder="NewChannelName">
+    </div>
+    <form id="chatform" class="row"action="{{ url_for('index') }}" method="post" >
+        <div id = "channellist" class="col-1">
+            {% for channel in channels %}
+            <button class="row buttonrow" name = {{channel.id}} value = {{channel.id}} id = {{channel.id}} >{{channel.channelname}}</button>
+            {% endfor %}
+        </div>
+        <div id = "messagelist" class="col-11">
+            {% for message in messages %}
+                {% set newrmessage = message.personName + ">" + message.msgdate.strftime('%Y-%m-%d %H:%M:%S') + "> " + message.messageText %}
+            <div class="messagerow"   >{{ newrmessage}}</div>
+            {% endfor %}
 
+        </div>
+    </form>
+</div>
+   
+    <hr>
 
+<div class="error"> </div>
+<div class="messageEnter"> 
+    <input class = col-9 id="NewMessage" type="text" placeholder="New messageEnter">
+    <button class = col-3 id = "btnmessage" >Submit Message for Channel {{channelclicked}} </button>
+ </div>
+    
 {% endblock %}

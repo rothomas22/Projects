@@ -3,14 +3,11 @@
     <head>
          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
          <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-         <title>Rosas Website!</title>
-        {% block head %}
-         <UL>
-            <LI><a href="{{ url_for('logout') }}">Logout</a></LI>
-        </UL>
-        {% endblock %}
+       {% block head %}
+         {% endblock %}
     </head>
     <body>
+    
         <h1>{% block heading %}
         {% endblock %}</h1>
 

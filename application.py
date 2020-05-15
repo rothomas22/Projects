@@ -1,162 +1,123 @@
 import os
 import requests
+from  chclasses import *
 
-from flask import Flask, session, render_template, request, redirect, url_for , jsonify
+from flask import Flask, session,  jsonify, render_template, request, redirect, url_for 
 from flask_session import Session
+from flask_socketio import SocketIO, emit
+from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 app = Flask(__name__)
-
-# Check for environment variable
-if not os.getenv("DATABASE_URL"):
-    raise RuntimeError("DATABASE_URL is not set")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+#app.config["SECRET_KEY"] = 'secret!'
+socketio = SocketIO(app)
 
 # Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Set up database
-engine = create_engine(os.getenv("DATABASE_URL"))
-db = scoped_session(sessionmaker(bind=engine))
+votes = {"yes": 0, "no": 0, "maybe": 0}
 
-if __name__ =="__main__":
-    app.run(Host='0.0.0.0',port=8001)
-    books = None
+channelset = set ()
+channeldict = {}
+channelnames = set ()
+messages = []
+channelclicked = None
 
-error_message = ""
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
-
-@app.route("/validateUser", methods=["GET", "POST"])
-def validateUser():
-  
-    submitbtn = request.form.get("submit")
-    registertbtn = request.form.get("register")
-    name = request.form.get("name")
-    password = request.form.get("password")
-
-    Enteredisbn = "Enter any ISBN"
-    Enteredtitle = "Enter any Title"
-    Enteredauthor = "Enter any Author"
+    global channelclicked, messages, channeldict, channelset
+    session["lastChannelClicked"] = ""
+    channelname = ""
 
     if request.method == "POST":
-        if submitbtn == "Submit":
-            user = db.execute("SELECT userid, password from users where username =:name and password =:password", {"name":name, "password": password} ).fetchone()
-            if user is None :
-                error_message = "UserID/Password is invalid.  Please re-enter or register"
-                return render_template("index.html", error_message = error_message)
-            else :
-                session["user_id"] = user.userid
-                session["name"] = name
-        elif registertbtn == "Register":  
-            emailaddress = request.form.get("emailaddress")
-            if ( (emailaddress =="") or (name =="") or (password =="") ):
-                error_message = "Email address, Name , Password is required.  Please re-enter for register"
-                return render_template("index.html", error_message = error_message)
-            else:
-                db.execute ("INSERT INTO users (username, password, emailaddress) VALUES (:username, :password, :emailaddress)",
-                {"username":name, "password": password, "emailaddress":emailaddress })
-                db.commit()
-                user = db.execute("SELECT userid, password from users where username =:name and password =:password", {"name":name, "password": password} ).fetchone()
-                session["user_id"] = user.userid
-                session["name"] = name
+        for x in channelset:
+            print (f" channel: {x.channelname} ")
+            print (f" channelid: {x.id} ")
+            channelclicked = request.form.get(f"{x.id}")
+            print (f" form id: {channelclicked} ")
+            if channelclicked is not None:
+              print (f" channel: {channelclicked} ")
+              session["lastChannelClicked"] = channelclicked
+              break
+    else:
+        session["lastChannelClicked"] = ""
+
+    if session["lastChannelClicked"] != "":
+        channelclicked = session["lastChannelClicked"]
+ 
+    print(f"index")
+    if channelclicked is not None:
+        print (f" channel: {channelclicked} ")
+        indkey = "channel" + str(channelclicked)
+        messages = channeldict[indkey].messages
+        channelname = channeldict[indkey].channelname
+      
+    return render_template("index.html",  channels=channelset, messages=messages, channelclicked = channelname)
+
+
+@socketio.on("add channel")
+def addchannel(data):
+    global channelclicked, messages, channeldict, channels
+    name = data["channel"]
+    if name not in channelnames :
+      channelnames.add(name)
+      channel = Channels(name)
+      indkey = "channel" + str(channel.id)
+      channeldict[indkey] = channel
+      channelset.add(channel)
+
+      #votes[selection] += 1
+      print(f" channelid {channel.id } channel name {name}")
+      session["error_message"] = ""
+      emit("new channel", {"name":name, "id": channel.id },  broadcast=True)
+
+    else:
+      session["error_message"]= "Channel name is not unique"
+      err_message = session["error_message"]
+      print(f"{err_message}")
+      #return redirect(url_for('index'))
+      #return render_template("index.html",  ) 
+
+      emit("new channel", {"errormessage":err_message}, broadcast=False)
+
+@socketio.on("add message")
+def addmessage(data):
+    global channelclicked, messages, channeldict, channelset
+    id = int(data["channelid"])
+    message = data["message"]
+    person = data["persononame"]
+    print (f" id :  {id} ")
    
-    return render_template("Search.html", name = session["name"], isbn = Enteredisbn , author = Enteredauthor , title = Enteredtitle)
-@app.route("/logout")
-def logout():
-        session["user_id"] = ""
-        session["name"] = ""
-        session["error_message"]= ""
+    foundchannel = None
 
-        return render_template("index.html")
+    for x in channelset:
+      print (f" channel: {x.channelname} ")
+      print (f" channelid: {x.id} ")
+      if x.id == id:
+        print (f" found channel: {x.id} ")
+        foundchannel = x
+        break
 
-@app.route("/searchBook", methods=["GET", "POST"])
-def searchBook():
-    session["error_message"]= ""
-  
-    if request.method == "POST":
-        isbn = request.form.get("isbn")
-        if isbn is None or isbn =="":
-            Enteredisbn = "Enter any ISBN"
-            isbn = ""
-        else:
-            Enteredisbn = isbn
-        isbn = "%"+ str(isbn) + "%"
-        title = request.form.get("title")
-        if title is None or title =="":
-            Enteredtitle = "Enter any Title"
-            title = ""
-        else:
-            Enteredtitle = title
-        title = "%"+ str(title) + "%"
-        author = request.form.get("author")
-        if author is None or author =="":
-            Enteredauthor = "Enter any Author"
-            author = ""
-        else:
-            Enteredauthor = author
-        author = "%"+ str(author) + "%"
-       
-        books = db.execute("SELECT * from books where isbn like :isbn and title like :title and author like :author", {"title":title, "isbn": isbn, "author": author} ).fetchall()
+    indkey = "channel" + str(x.id)
+    foundchannel = channeldict[indkey]
+    newMessage = Message(message, person, datetime.now() )
+    #print (f" channel: {channel} ")
+    if foundchannel is not None:
+      print (f" found channel: {foundchannel.channelname} ")
+      foundchannel.add_message(newMessage)
+    
+    #for mychannel in channel:
+     # printf(f" mychannel: {mychannel}" )
+     # mychannel.add_message(newMessage)
+     # foundchannel = mychannel
 
-        return render_template("Search.html",name = session["name"], books=books, isbn = Enteredisbn , author = Enteredauthor , title = Enteredtitle)
+    fullmessage =  person + "> " + newMessage.msgdate.strftime('%Y-%m-%d %H:%M:%S')  + "> " + newMessage.messageText 
+   
+    #print(f" message {fullmessage}  channelid {foundchannel.id}")
+    emit("new message", {"fullmessage":fullmessage, "id": foundchannel.id}, broadcast=True)
 
-@app.route("/bookDetails/<int:bookid>", methods=["GET"])
-def bookDetails(bookid):
-    #bookid = request.form.get("bookid")
-    session["bookid"] = bookid
-
-    bookDetails = db.execute("SELECT b.title, b.author, b.isbn, b.year, u.username, br.reviewtext, br.rating from books b left join bookreviews br on b.bookid = br.bookid " +
-    "left join users u on u.userid = br.userid where b.bookid = :bookid", {"bookid":bookid} ).fetchall()
-
-    if bookDetails is None:
-        return ("Book not found")
-    else:
-        res = requests.get("https://www.goodreads.com/book/review_counts.json", params={"key": "nXn9aCuRsnXObj5uGflP3Q", "isbns": {bookDetails[0].isbn}})
-        data = res.json()
-        return render_template("bookReviews.html",name = session["name"], bookDetails=bookDetails, goodreads=data)
-
-@app.route("/addRating", methods=["POST"])
-def addRating():
-    submitbtn = request.form.get("Submit")
-    session["error_message"]= ""
-    if submitbtn == "Submit":
-        reviewtext = request.form.get("ReviewText")
-        rating =  request.form.get("rating")
-        if ( (reviewtext =="") or (rating =="") ):
-            session["error_message"]= "Review Text, Rating  is required.  Please re-enter for submission"
-            return redirect(url_for('bookDetails', bookid=session["bookid"]))
-        else:
-            db.execute ("INSERT INTO bookreviews (bookid, userid, reviewtext, rating) VALUES (:bookid, :userid, :reviewtext, :rating)",
-            {"userid":session["user_id"], "bookid": session["bookid"], "reviewtext":reviewtext, "rating": rating })
-            db.commit()
-            # return render_template("bookReviews.html",name = session["name"] , bookid=session["bookid"])
-            return redirect(url_for('bookDetails', bookid=session["bookid"]))
-
-@app.route("/api/<string:isbn>", methods=["GET"])
-def api(isbn):
-    error404 = False
-    if isbn is None:
-        error404 = True
-    else:
-        bookDetails = db.execute("SELECT b.title, b.author, b.isbn, b.year, count(br.bookid) as reviewcount, avg(br.rating) as avgrating from books b left join bookreviews br on b.bookid = br.bookid " +
-        "where b.isbn = :isbn group by 1,2,3,4", {"isbn":isbn} ).fetchone()
-        if bookDetails is None:
-            error404 = True
-        else:
-            avgrating = round(bookDetails.avgrating, 2)
-
-    if error404:
-        return jsonify({"error": "ISBN not found"}), 404
-    else:
-         return jsonify({
-            "title": bookDetails.title,
-            "author": bookDetails.author,
-            "year": bookDetails.year,
-            "isbn": bookDetails.isbn,
-            "review_count": bookDetails.reviewcount,
-            "average_score": str(avgrating)
-         }), 200
+    
